@@ -1,19 +1,18 @@
 const express = require('express')
 const graphqlHTTP = require('express-graphql')
-const fetch = require('node-fetch')
 const schema = require('./src/schema')
+const { exchangesLoader } = require('./src/loaders')
 
 const app = express()
-
-const fetchExchanges = () => fetch('https://api.bitvalor.com/v1/exchanges.json')
-    .then(response => response.json())
 
 app.use('/', graphqlHTTP({
     schema,
     context: {
-        exchanges: fetchExchanges()
+        exchangesLoader
     },
     graphiql: true
 }))
 
-app.listen(4000, () => { console.log('Server running...') })
+const port = process.env.PORT || 4000
+
+app.listen(port, () => { console.log('Server running...', `http://localhost:${port}`) })

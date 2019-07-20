@@ -49,7 +49,7 @@ const schema = new GraphQLSchema({
                     id: { type: ExchangeIDType }
                 },
                 resolve: async (root, { id }, context) => {
-                    const exchanges = await context.exchanges
+                    const exchanges = await context.exchangesLoader()
 
                     const exchange = exchanges[id]
 
