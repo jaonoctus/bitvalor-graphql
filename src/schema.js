@@ -2,7 +2,8 @@ const {
     GraphQLSchema,
     GraphQLObjectType,
     GraphQLString,
-    GraphQLEnumType
+    GraphQLEnumType,
+    GraphQLFloat
 } = require('graphql')
 
 const ExchangeIDType = new GraphQLEnumType({
@@ -28,6 +29,43 @@ const ExchangeIDType = new GraphQLEnumType({
     }
 })
 
+const brlDepositResolver = data => {
+    let [ porcentagem, valorFixado ] = data.in_BRL
+    
+    if (porcentagem === 0) return `R$${valorFixado}`
+    
+    porcentagem = (porcentagem * 100).toFixed(2)
+    valorFixado = valorFixado.toFixed(2)
+
+    return `${porcentagem}% + R$${valorFixado}`
+}
+
+const PorcentagemValorFixado = new GraphQLObjectType({
+    name: 'PorcentagemValorFixado',
+    fields: () => ({
+        percentage: { type: GraphQLFloat },
+        fixed: { type: GraphQLFloat }
+    })
+})
+
+const feeResolver = (data, key) => {
+    const [ percentage, fixed ] = data[key]
+
+    return { percentage, fixed }
+}
+
+const FeeType = new GraphQLObjectType({
+    name: 'ExchangeFee',
+    fields: () => ({
+        in_BRL: { type: PorcentagemValorFixado, resolve: data => feeResolver(data, 'in_BRL') },
+        in_BTC: { type: PorcentagemValorFixado, resolve: data => feeResolver(data, 'in_BTC') },
+        out_BRL: { type: PorcentagemValorFixado, resolve: data => feeResolver(data, 'out_BRL') },
+        out_BTC: { type: PorcentagemValorFixado, resolve: data => feeResolver(data, 'out_BTC') },
+        trade_book: { type: PorcentagemValorFixado, resolve: data => feeResolver(data, 'trade_book') },
+        trade_market: { type: PorcentagemValorFixado, resolve: data => feeResolver(data, 'trade_market') }
+    })
+})
+
 const ExchangeType = new GraphQLObjectType({
     name: 'Exchange',
     fields: () => ({
@@ -35,7 +73,8 @@ const ExchangeType = new GraphQLObjectType({
         name: { type: GraphQLString },
         color: { type: GraphQLString },
         url: { type: GraphQLString },
-        url_book: { type: GraphQLString }
+        url_book: { type: GraphQLString },
+        fees: { type: FeeType, resolve: data => data.fees }
     })
 })
 
